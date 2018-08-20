@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -
+
+import requests
+import re
+
+
+
+# response = requests.get(url,headers = headers)
+# print(response.text)
+
+def GetPage(url,headers):
+    response = requests.get(url,headers = headers)
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
+
+def PageParese(html):
+    result = re.findall('class="movie-item-info">.*?title="(\w+)".*?<p.*?class="star">.*?(\S+).*?</p>.*?<p.*?class="releasetime">.*?(\S+)</p>',html,re.S)
+    return result
+
+def main(url,headers):
+    html = GetPage(url,headers)
+    result = PageParese(html)
+    return result
+
+if __name__ =="__main__":
+    offset = 0
+    result = []
+    headers = {
+    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0'
+}
+    while offset < 100:
+        url = 'http://www.maoyan.com/board/4?offset='+str(offset)
+        result.append(main(url,headers))
+        offset += 10
+
+    for item in result:
+        for i in item:
+            for k in i:
+                print(k)
+            print('==============')
