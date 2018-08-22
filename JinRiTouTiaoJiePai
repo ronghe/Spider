@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import requests
+from selenium import webdriver
+from pyquery import PyQuery as pq
+import pymongo
+import os
+
+
+def GetPage(url,headers):
+    response = requests.get(url,headers = headers)
+    if response.status_code == 200:
+        return response.json()
+
+def ParesePage(json,headers):
+    if json:
+        data = json['data']
+        for item in data:
+            share_url = item.get('share_url')
+            Title = item.get('title')
+            index = 1
+
+            if share_url:
+                browser = webdriver.Firefox()
+                browser.get(share_url)
+                with open('html.html','w',encoding='utf-8') as f:
+                    f.write(browser.page_source)
+                html = ''
+                browser.close()
+                with open('html.html','r',encoding='utf-8') as f:
+                    html = f.read()
+
+                doc = pq(html)
+                li_list = doc('.imageList .image-list .image-item img').items()
+
+                for item in li_list:
+                    if not os.path.exists('E:/PythonProject/JiePai/'+Title+'/'):
+                        os.mkdir('E:/PythonProject/JiePai/'+Title+'/')
+                    path = 'E:/PythonProject/JiePai/'+Title+'/'
+                    os.chdir(path)
+                    f = open(str(index)+'.jpg','wb')
+                    f.write(requests.get(item.attr('data-src')).content)
+                    f.close()
+                    index += 1
+
+
+if __name__ == "__main__":
+
+    offset = 0
+    headers = {
+        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0'
+    }
+
+    while offset <= 140:
+        url = 'https://www.toutiao.com/search_content/?offset='+str(offset)+'&format=json&keyword=街拍&autoload=true&count=20&cur_tab=1&from=search_tab'
+        json = GetPage(url,headers)
+        ParesePage(json,headers)
+        offset += 20
